@@ -96,54 +96,62 @@
     <a href="https://github.com/Themostrandom/screenshot-compressor" target="_blank">View on GitHub</a>
   </div>
 
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const preview = document.getElementById('preview');
-    const sizeInfo = document.getElementById('sizeInfo');
-    const TARGET_SIZE_KB = 280;
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const preview = document.getElementById('preview');
+  const sizeInfo = document.getElementById('sizeInfo');
+  const TARGET_SIZE_KB = 280;
+  const MARGIN_KB = 25;
 
-    let compressedBlob = null;
+  let compressedBlob = null;
+  let originalFileName = 'compressed-image.png';
 
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = async () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    originalFileName = `${nameWithoutExt}.png`;
 
-        const maxWidth = 1000;
-        const scale = Math.min(1, maxWidth / img.width);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
 
-        let quality = 0.9;
-        let blob;
+      let scale = 1;
+      let blob;
 
-        do {
-          blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
-          quality -= 0.05;
-        } while (blob.size > TARGET_SIZE_KB * 1024 && quality > 0.1);
+      do {
+        const width = img.width * scale;
+        const height = img.height * scale;
+        canvas.width = width;
+        canvas.height = height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
 
-        compressedBlob = blob;
-        preview.src = URL.createObjectURL(blob);
-        const sizeInKB = (blob.size / 1024).toFixed(1);
-        sizeInfo.textContent = `Compressed Size: ${sizeInKB} KB`;
-        downloadBtn.disabled = false;
-      };
-    });
+        blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
 
-    downloadBtn.addEventListener('click', () => {
-      if (!compressedBlob) return;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(compressedBlob);
-      a.download = 'compressed-image.jpg';
-      a.click();
-    });
-  </script>
+        scale -= 0.05; // decrease size by 5% each iteration
+      } while (blob.size / 1024 > TARGET_SIZE_KB + MARGIN_KB && scale > 0.1);
+
+      compressedBlob = blob;
+      preview.src = URL.createObjectURL(blob);
+      const sizeInKB = (blob.size / 1024).toFixed(1);
+      sizeInfo.textContent = `Compressed Size: ${sizeInKB} KB`;
+      downloadBtn.disabled = false;
+    };
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (!compressedBlob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(compressedBlob);
+    a.download = originalFileName;
+    a.click();
+  });
+</script>
+
 </body>
 </html>
