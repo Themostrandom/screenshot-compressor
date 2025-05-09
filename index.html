@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Screenshot Compressor</title>
+  <title>Image Compressor</title>
   <style>
     body {
       background-color: #121212;
@@ -13,6 +13,7 @@
       flex-direction: column;
       align-items: center;
       padding: 2rem;
+      min-height: 100vh;
     }
 
     h2 {
@@ -65,14 +66,35 @@
       font-size: 0.9rem;
       color: #bbb;
     }
+
+    .github-link {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .github-link a {
+      color: #888;
+      text-decoration: none;
+      border-bottom: 1px dotted #888;
+    }
+
+    .github-link a:hover {
+      color: #fff;
+      border-bottom: 1px solid #fff;
+    }
   </style>
 </head>
 <body>
-  <h2>Screenshot Compressor (~280KB)</h2>
+  <h2>Image Compressor (~280KB)</h2>
   <input type="file" id="fileInput" accept="image/*">
   <button id="downloadBtn" disabled>Download Compressed Image</button>
   <div id="sizeInfo">No file selected.</div>
   <img id="preview" class="preview" alt="Preview" />
+
+  <div class="github-link">
+    <a href="https://github.com/Themostrandom/screenshot-compressor" target="_blank">View on GitHub</a>
+  </div>
 
   <script>
     const fileInput = document.getElementById('fileInput');
