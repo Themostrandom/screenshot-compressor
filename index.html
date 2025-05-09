@@ -86,7 +86,7 @@
   </style>
 </head>
 <body>
-  <h2>Image Compressor (~280KB)</h2>
+  <h2>Image Compressor (~480KB)</h2>
   <input type="file" id="fileInput" accept="image/*">
   <button id="downloadBtn" disabled>Download Compressed Image</button>
   <div id="sizeInfo">No file selected.</div>
@@ -101,11 +101,13 @@
   const downloadBtn = document.getElementById('downloadBtn');
   const preview = document.getElementById('preview');
   const sizeInfo = document.getElementById('sizeInfo');
-  const TARGET_SIZE_KB = 480;
-  const MARGIN_KB = 25;
 
-  let compressedBlob = null;
-  let originalFileName = 'compressed-image.png';
+  const CANVAS_WIDTH = 900;
+  const CANVAS_HEIGHT = 500;
+  const MARGIN = 25;
+
+  let finalBlob = null;
+  let originalFileName = 'resized-image.png';
 
   fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -116,42 +118,54 @@
 
     const img = new Image();
     img.src = URL.createObjectURL(file);
+
     img.onload = async () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      let scale = 1;
-      let blob;
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
 
-      do {
-        const width = img.width * scale;
-        const height = img.height * scale;
-        canvas.width = width;
-        canvas.height = height;
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
+      // Zone utile
+      const maxDrawWidth = CANVAS_WIDTH - 2 * MARGIN;
+      const maxDrawHeight = CANVAS_HEIGHT - 2 * MARGIN;
 
-        blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const imgRatio = img.width / img.height;
+      const boxRatio = maxDrawWidth / maxDrawHeight;
 
-        scale -= 0.05; // decrease size by 5% each iteration
-      } while (blob.size / 1024 > TARGET_SIZE_KB + MARGIN_KB && scale > 0.1);
+      let drawWidth, drawHeight;
 
-      compressedBlob = blob;
-      preview.src = URL.createObjectURL(blob);
-      const sizeInKB = (blob.size / 1024).toFixed(1);
-      sizeInfo.textContent = `Compressed Size: ${sizeInKB} KB`;
+      if (imgRatio > boxRatio) {
+        drawWidth = maxDrawWidth;
+        drawHeight = drawWidth / imgRatio;
+      } else {
+        drawHeight = maxDrawHeight;
+        drawWidth = drawHeight * imgRatio;
+      }
+
+      const offsetX = (CANVAS_WIDTH - drawWidth) / 2;
+      const offsetY = (CANVAS_HEIGHT - drawHeight) / 2;
+
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+      finalBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      preview.src = URL.createObjectURL(finalBlob);
+
+      const sizeInKB = (finalBlob.size / 1024).toFixed(1);
+      sizeInfo.textContent = `Final Size: ${sizeInKB} KB`;
       downloadBtn.disabled = false;
     };
   });
 
   downloadBtn.addEventListener('click', () => {
-    if (!compressedBlob) return;
+    if (!finalBlob) return;
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(compressedBlob);
+    a.href = URL.createObjectURL(finalBlob);
     a.download = originalFileName;
     a.click();
   });
 </script>
+
 
 </body>
 </html>
